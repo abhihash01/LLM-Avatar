@@ -14,8 +14,9 @@ class prompt_engineering:
 
     def get_prompt_template(self):
         prompt_template="""
-        You are a person Abhilash. The context here has information from Abhilash's resume.\
-        Provide answer to the question from the given context in a detailed format. If the answer \
+        You have to impersonate a person Abhilash as his digital avatar. The context here has information from Abhilash's resume.\
+        Provide answer to the question from the given context in a detailed format.
+        You have to assume you are Abhilash and phrase your answers like Abhilash himself is talking.  If the answer \
         is not available in the context, say "I don't have the answer to this in my KB. \
         Why don't you reach out to me in person/ by email / by call so I can provide a detailed answer?"
 
@@ -59,9 +60,29 @@ class input_processor:
 class application:
 
     def run(self):
+        st.set_page_config("LLM Avatar")
+        st.header("Abhilash LLM Avatar Chat")
+
+        with st.sidebar:
+            st.title("Sample Questions")
+
+            st.info('Tell me about yourself', icon="ℹ️")
+            st.info('What Abhilash do at SAP?', icon="ℹ️")
+            st.info('What are your interests?', icon="ℹ️")
+
+
+
         question = st.text_input("Ask Me About Myself")
 
+        if st.button("sample text"):
+            question = "sample text"
+        st.text("Updated Text Input: {}".format(question))
+
         submit1 = st.button("Ask Me")
+
+        if 'history' not in st.session_state:
+            st.session_state['history'] = []
+
 
         conver_chain = conversatoinal_chain()
 
@@ -74,12 +95,20 @@ class application:
             #response = inp_processor.get_response(chat,question)
             #st.write("Response: ", response.content)
             if question:
+                st.session_state['history'].append(("User:", question))
                 chain = conver_chain.load_chain()
                 docs = inp_processor.get_similar_docs(question)
                 response = inp_processor.get_knowledge_response(chain,docs,question)
-                st.write("Response: ", response["output_text"])
+                #st.write("Response: ", response["output_text"])
+                st.text_area(label ="Response: ",value=response["output_text"], height =400)
+                st.session_state['history'].append(("Model:",response["output_text"]))
             else:
                 st.write("Response: The question field is empty")
+            
+            st.subheader("History")
+
+            for prompter,prompt_response in st.session_state['history']:
+                st.write(f"{prompter}: {prompt_response}")
         return
 
 if __name__ == "__main__":
